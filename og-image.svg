@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0f1117"/>
+  <rect x="40" y="40" width="1120" height="550" rx="16" fill="#161921"/>
+  
+  <!-- Hangfire Icon -->
+  <g transform="translate(560,100) scale(0.6)">
+    <rect width="100" height="100" rx="20" fill="#4E3188"/>
+    <text x="50" y="70" text-anchor="middle" font-size="52" font-weight="bold" fill="white" font-family="Inter, system-ui, sans-serif">H</text>
+  </g>
+  
+  <!-- Title -->
+  <text x="600" y="260" text-anchor="middle" font-size="48" font-weight="700" fill="#e2e4e9" font-family="Inter, system-ui, sans-serif">Hangfire Geliştirici El Kitabı</text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="310" text-anchor="middle" font-size="24" fill="#9ca3b4" font-family="Inter, system-ui, sans-serif">v1.8.23 — .NET Background Job Processing</text>
+  
+  <!-- Stats -->
+  <text x="600" y="380" text-anchor="middle" font-size="18" fill="#7c5cbf" font-family="Inter, system-ui, sans-serif">14 Bölüm · 12 SVG Diyagram · 40+ Kod Örneği</text>
+  
+  <!-- Level badges -->
+  <rect x="350" y="420" width="80" height="28" rx="14" fill="#34d399" opacity="0.2"/>
+  <text x="390" y="439" text-anchor="middle" font-size="13" fill="#34d399" font-family="Inter, system-ui, sans-serif">Temel</text>
+  
+  <rect x="450" y="420" width="80" height="28" rx="14" fill="#fb923c" opacity="0.2"/>
+  <text x="490" y="439" text-anchor="middle" font-size="13" fill="#c4a44e" font-family="Inter, system-ui, sans-serif">Orta</text>
+  
+  <rect x="550" y="420" width="80" height="28" rx="14" fill="#fb923c" opacity="0.2"/>
+  <text x="590" y="439" text-anchor="middle" font-size="13" fill="#fb923c" font-family="Inter, system-ui, sans-serif">İleri</text>
+  
+  <rect x="650" y="420" width="80" height="28" rx="14" fill="#c76a6a" opacity="0.2"/>
+  <text x="690" y="439" text-anchor="middle" font-size="13" fill="#c76a6a" font-family="Inter, system-ui, sans-serif">Uzman</text>
+  
+  <!-- Topics -->
+  <text x="600" y="490" text-anchor="middle" font-size="15" fill="#6b7280" font-family="Inter, system-ui, sans-serif">Fire-and-Forget · Delayed · Recurring · Batch · Dashboard · Storage · Retry · Docker</text>
+  
+  <!-- Footer -->
+  <text x="600" y="560" text-anchor="middle" font-size="16" fill="#6b7280" font-family="Inter, system-ui, sans-serif">oxara.github.io/hangfire-handbook</text>
+</svg>
