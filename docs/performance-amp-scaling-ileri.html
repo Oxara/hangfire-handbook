@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Performance & Scaling — Hangfire Geliştirici El Kitabı</title>
+<meta name="description" content="Hangfire ile background job tasarımı, storage, retry, scaling ve production operasyonları.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://oxara.github.io/hangfire-handbook/docs/performance-amp-scaling-ileri.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Performance & Scaling — Hangfire Geliştirici El Kitabı">
+<meta property="og:description" content="Hangfire ile background job tasarımı, storage, retry, scaling ve production operasyonları.">
+<meta property="og:url" content="https://oxara.github.io/hangfire-handbook/docs/performance-amp-scaling-ileri.html">
+<meta property="og:site_name" content="Hangfire Geliştirici El Kitabı">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:image" content="https://oxara.github.io/hangfire-handbook/og-image.svg">
+<meta property="og:image:type" content="image/svg+xml">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Hangfire Geliştirici El Kitabı">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Performance & Scaling — Hangfire Geliştirici El Kitabı">
+<meta name="twitter:description" content="Hangfire ile background job tasarımı, storage, retry, scaling ve production operasyonları.">
+<meta name="twitter:image" content="https://oxara.github.io/hangfire-handbook/og-image.svg">
+<meta name="twitter:image:alt" content="Hangfire Geliştirici El Kitabı">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/base/base.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/theme/theme.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/docs-layout/docs-layout.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/code-highlight/code-highlight.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/copy-code/copy-code.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/code-tabs/code-tabs.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/search/search.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/scroll-top/scroll-top.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/reading-progress/reading-progress.css">
+<style>
+.level-badge { display:none; }
+.docs-article svg { max-width:min(100%,820px); height:auto; }
+
+    .handbook-level {
+        margin: 4.5rem 0 2rem;
+        color: var(--text-dim);
+        font-size: .78rem;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-align: center;
+        text-transform: uppercase;
+    }
+    .level-badge {
+        display: inline-block;
+        margin-left: .45rem;
+        padding: .12rem .42rem;
+        color: var(--brand);
+        background: var(--brand-subtle);
+        border-radius: 4px;
+        font-size: .62rem;
+        vertical-align: middle;
+    }
+    .docs-article > section { margin-bottom: 3.5rem; }
+    .docs-article svg { max-width: min(100%, 820px); height: auto; }
+    .docs-article blockquote {
+        margin: 1rem 0 1.5rem;
+        padding: 1rem 1.2rem;
+        color: var(--text-muted);
+        background: var(--surface);
+        border-left: 4px solid var(--border);
+        border-radius: 8px;
+    }
+
+
+    .box { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .box-storage { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .box-server { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 8; }
+    .box-dash { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 8; }
+    .label { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 13px; font-weight: 600; }
+    .sublabel { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 10px; }
+    .arrow-line { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow1); }
+
+
+    .state { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 20; }
+    .state-success { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 20; }
+    .state-fail { fill: var(--svg-box); stroke: var(--svg-err-s); stroke-width: 1.5; rx: 20; }
+    .slabel { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 12px; font-weight: 500; }
+    .aline { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow2); }
+
+
+    .dbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .dbox-wait { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 8; }
+    .dlabel { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 12px; font-weight: 500; }
+    .dsub { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 10px; }
+    .dline { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow3); }
+
+
+    .rbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .rbox-cron { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .rlabel { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 12px; font-weight: 500; }
+    .rsub { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 10px; }
+    .rline { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow4); }
+    .rloop { stroke: var(--svg-ok-s); stroke-width: 1.5; fill: none; stroke-dasharray: 4 2; marker-end: url(#arrow4); }
+
+
+    .cbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .cbox-done { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .clabel { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .csub { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+    .cline { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow5); }
+    .cbatch { fill: none; stroke: var(--svg-warn-s); stroke-width: 1; stroke-dasharray: 4 2; rx: 10; }
+
+
+    .fbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .fbox-filter { fill: var(--surface-2); stroke: var(--svg-warn-s); stroke-width: 1; rx: 6; }
+    .flabel { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .fsub { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+    .fline { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow6); }
+
+
+    .rbox2 { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 20; }
+    .rbox2-fail { fill: var(--svg-box); stroke: var(--svg-err-s); stroke-width: 1.5; rx: 20; }
+    .rbox2-ok { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 20; }
+    .rbox2-dead { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 20; }
+    .rl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .rs { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+    .rln { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow7); }
+    .rln-retry { stroke: var(--svg-warn-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow7r); stroke-dasharray: 4 2; }
+
+
+    .tbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .tbox-unit { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .tbox-int { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 8; }
+    .tbox-e2e { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 8; }
+    .tlabel { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .tsub { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+
+
+    .dbox2 { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .dbox2-secure { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .dbox2-block { fill: var(--svg-box); stroke: var(--svg-err-s); stroke-width: 1.5; rx: 8; }
+    .dl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .ds { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+
+
+    .sbox { fill: var(--svg-box); rx: 8; }
+    .sbox-sql { stroke: var(--svg-brand-s); stroke-width: 1.5; }
+    .sbox-redis { stroke: var(--svg-err-s); stroke-width: 1.5; }
+    .sbox-pg { stroke: var(--info); stroke-width: 1.5; }
+    .sl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; }
+    .ss { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+    .divider { stroke: var(--svg-stroke); stroke-width: 1; }
+
+
+    .dbbox { fill: var(--svg-box); rx: 8; }
+    .dbbox-sep { stroke: var(--svg-ok-s); stroke-width: 1.5; }
+    .dbbox-same { stroke: var(--svg-warn-s); stroke-width: 1.5; }
+    .dbl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; }
+    .dbs { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+
+
+    .bpbox-bad { fill: var(--svg-box); stroke: var(--svg-err-s); stroke-width: 1.5; rx: 8; }
+    .bpbox-good { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .bpl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; }
+    .bps { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+
+
+    .pbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .pbox-storage { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 2; rx: 8; }
+    .pbox-server { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 8; }
+    .pl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .ps { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+    .pline { stroke: var(--svg-brand-s); stroke-width: 1; stroke-dasharray: 3 2; }
+
+
+    .mbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .mbox-alert { fill: var(--svg-box); stroke: var(--svg-err-s); stroke-width: 1.5; rx: 8; }
+    .ml { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .ms { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+
+
+    .pcbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .pcbox-db { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .pcbox-app { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .pcl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .pcs { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+
+</style>
+</head><body class="docs-page">
+<a class="skip-link" href="#main-content">İçeriğe atla</a>
+<div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+<header class="docs-topbar"><div class="docs-topbar-inner">
+<button class="docs-menu-toggle" type="button" data-docs-nav-toggle aria-label="Doküman menüsünü aç"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+<a class="docs-brand" href="../index.html"><span class="docs-brand-mark">H</span><span>Hangfire Handbook</span></a>
+<nav class="docs-top-links"><a href="giris-amp-kurulum-temel.html">Rehber</a><a href="https://github.com/Oxara/hangfire-handbook">GitHub</a></nav>
+<div class="docs-top-actions">
+<button class="search-trigger" type="button" onclick="search.openSearch()" aria-label="Arama yap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="7"></circle><line x1="21" y1="21" x2="15" y2="15"></line></svg><span>Ara</span><kbd>Ctrl+K</kbd></button>
+<button class="theme-toggle" type="button" onclick="theme.toggleTheme()" aria-label="Tema değiştir"><span class="theme-toggle-icon">☀️</span><span class="theme-toggle-label">Dark</span></button>
+</div></div></header>
+<div class="docs-overlay" data-docs-overlay></div>
+<div class="docs-shell">
+<aside class="docs-sidebar" data-docs-sidebar><div class="docs-sidebar-inner">
+<div class="docs-nav-group">
+<div class="docs-nav-label">Temel Seviye</div>
+<a class="docs-nav-link" href="giris-amp-kurulum-temel.html">Giriş & Kurulum</a>
+<a class="docs-nav-link" href="konfigurasyon-referansi-temel.html">Konfigürasyon Referansı</a>
+<a class="docs-nav-link" href="fire-and-forget-jobs-temel.html">Fire-and-Forget Jobs</a>
+<a class="docs-nav-link" href="delayed-jobs-temel.html">Delayed Jobs</a>
+<a class="docs-nav-link" href="recurring-jobs-cron-temel.html">Recurring Jobs (Cron)</a>
+</div>
+<div class="docs-nav-group">
+<div class="docs-nav-label">Orta Seviye</div>
+<a class="docs-nav-link" href="continuations-amp-batch-jobs-orta.html">Continuations & Batch Jobs</a>
+<a class="docs-nav-link" href="job-filters-amp-middleware-orta.html">Job Filters & Middleware</a>
+<a class="docs-nav-link" href="retry-amp-error-handling-orta.html">Retry & Error Handling</a>
+<a class="docs-nav-link" href="testing-strategies-orta.html">Testing Strategies</a>
+</div>
+<div class="docs-nav-group">
+<div class="docs-nav-label">İleri Seviye</div>
+<a class="docs-nav-link" href="dashboard-amp-guvenlik-ileri.html">Dashboard & Güvenlik</a>
+<a class="docs-nav-link" href="storage-secimi-ileri.html">Storage Seçimi</a>
+<a class="docs-nav-link" href="best-practices-amp-anti-patterns-ileri.html">Best Practices & Anti-Patterns</a>
+<a class="docs-nav-link active" href="performance-amp-scaling-ileri.html">Performance & Scaling</a>
+</div>
+<div class="docs-nav-group">
+<div class="docs-nav-label">Uzman Seviye</div>
+<a class="docs-nav-link" href="monitoring-amp-alerting-uzman.html">Monitoring & Alerting</a>
+<a class="docs-nav-link" href="production-checklist-amp-docker-uzman.html">Production Checklist & Docker</a>
+</div></div></aside>
+<main class="docs-main" id="main-content" tabindex="-1"><article class="docs-article">
+<header class="docs-article-header"><p class="docs-eyebrow">İLERİ</p><h1>Performance & Scaling</h1><p class="docs-lead">Hangfire, birden fazla sunucuda dağıtık çalışabilir — otomatik senkronizasyon storage üzerinden yapılır.</p></header>
+
+<section id="section-performance-amp-scaling-ileri">
+<h3 id="karar-rehberi-performance-amp-scaling-ileri">Karar Rehberi</h3><div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Durum</th>
+<th>Öneri</th>
+<th>Örnek veya gerekçe</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>&gt;1K job/gün, tek sunucu yetmiyor</td>
+<td><strong>Uygun:</strong> Multi-server</td>
+<td>E-ticaret Black Friday</td>
+</tr>
+<tr>
+<td>Queue priority gerekli</td>
+<td><strong>Uygun:</strong> Queue isolation</td>
+<td>Ödeme &gt; email &gt; analytics</td>
+</tr>
+<tr>
+<td>Latency düşürmek</td>
+<td><strong>Uygun:</strong> Polling interval azalt</td>
+<td>Sipariş onay &lt; 5s</td>
+</tr>
+<tr>
+<td>Basit cron job (günde 1)</td>
+<td><strong>Uygun değil:</strong> Scaling gereksiz</td>
+<td>Tek worker yeterli</td>
+</tr>
+<tr>
+<td>Resource sınırlı ortam</td>
+<td><strong>Uygun değil:</strong> Worker artırma riskli</td>
+<td>512MB container</td>
+</tr>
+</tbody></table></div>
+<div class="diagram-wrapper"><svg viewBox="0 0 780 220" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .pbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .pbox-storage { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 2; rx: 8; }
+    .pbox-server { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 8; }
+    .pl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .ps { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+    .pline { stroke: var(--svg-brand-s); stroke-width: 1; stroke-dasharray: 3 2; }
+  </style>
+  <!-- Central Storage -->
+  <rect class="pbox-storage" x="290" y="80" width="180" height="60"></rect>
+  <text class="pl" x="380" y="105" text-anchor="middle">Shared Storage</text>
+  <text class="ps" x="380" y="120" text-anchor="middle">SQL Server / Redis</text>
+  <!-- Server instances -->
+  <rect class="pbox-server" x="20" y="20" width="150" height="50"></rect>
+  <text class="pl" x="95" y="40" text-anchor="middle">Server 1</text>
+  <text class="ps" x="95" y="55" text-anchor="middle">Workers: 20</text>
+  <rect class="pbox-server" x="20" y="90" width="150" height="50"></rect>
+  <text class="pl" x="95" y="110" text-anchor="middle">Server 2</text>
+  <text class="ps" x="95" y="125" text-anchor="middle">Workers: 20</text>
+  <rect class="pbox-server" x="20" y="160" width="150" height="50"></rect>
+  <text class="pl" x="95" y="180" text-anchor="middle">Server 3</text>
+  <text class="ps" x="95" y="195" text-anchor="middle">Workers: 20</text>
+  <!-- Connections -->
+  <line class="pline" x1="170" y1="45" x2="288" y2="95"></line>
+  <line class="pline" x1="170" y1="115" x2="288" y2="110"></line>
+  <line class="pline" x1="170" y1="185" x2="288" y2="125"></line>
+  <!-- Client -->
+  <rect class="pbox" x="590" y="80" width="150" height="60"></rect>
+  <text class="pl" x="665" y="105" text-anchor="middle">API Server</text>
+  <text class="ps" x="665" y="120" text-anchor="middle">Enqueue jobs</text>
+  <line class="pline" x1="588" y1="110" x2="472" y2="110"></line>
+  <!-- Label -->
+  <text class="ps" x="380" y="165" text-anchor="middle" style="fill:var(--svg-ok-s)">Automatic coordination — no config needed</text>
+</svg></div>
+
+<h3 id="worker-count-tuning">Worker Count Tuning</h3><pre data-lang="csharp"><code class="language-csharp">builder.Services.AddHangfireServer(options =&gt;
+{
+    // CPU-bound: ProcessorCount
+    // IO-bound (API calls, DB): ProcessorCount * 2-5
+    // Mixed: ProcessorCount * 2 (default)
+    options.WorkerCount = Environment.ProcessorCount * 3;
+
+    // Queue priority
+    options.Queues = new[] { "critical", "default", "low" };
+
+    // Graceful shutdown timeout
+    options.ShutdownTimeout = TimeSpan.FromSeconds(30);
+    options.StopTimeout = TimeSpan.FromSeconds(15);
+
+    // Server check interval
+    options.HeartbeatInterval = TimeSpan.FromSeconds(30);
+    options.ServerCheckInterval = TimeSpan.FromMinutes(5);
+    options.ServerTimeout = TimeSpan.FromMinutes(5);
+
+    // Schedule polling interval
+    options.SchedulePollingInterval = TimeSpan.FromSeconds(15);
+});</code></pre><h3 id="multi-server-deployment">Multi-Server Deployment</h3><pre data-lang="csharp"><code class="language-csharp">// Ayrı server'lar farklı queue'lara odaklanabilir
+
+// Server A — Critical jobs only (düşük latency)
+builder.Services.AddHangfireServer(options =&gt;
+{
+    options.ServerName = "critical-worker";
+    options.Queues = new[] { "critical" };
+    options.WorkerCount = 10;
+});
+
+// Server B — Default + Low priority (throughput)
+builder.Services.AddHangfireServer(options =&gt;
+{
+    options.ServerName = "bulk-worker";
+    options.Queues = new[] { "default", "low" };
+    options.WorkerCount = 40;
+});</code></pre><h3 id="sql-server-polling-optimization">SQL Server Polling Optimization</h3><pre data-lang="csharp"><code class="language-csharp">// ÖNERİLEN: SlidingInvisibilityTimeout ayarlıysa TimeSpan.Zero kullanın
+// Bu durumda Hangfire long-polling yapar (DB WAITFOR), polling gereksiz
+new SqlServerStorageOptions
+{
+    QueuePollInterval = TimeSpan.Zero,              // Long-polling (en iyi latency, en az DB load)
+    SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+    TryAutoDetectSchemaDependentOptions = true,     // Schema 7'de otomatik aktif
+
+    // Connection pool büyütün
+    // ConnectionString'e: "Max Pool Size=100"
+}</code></pre><div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Parametre</th>
+<th>Varsayılan</th>
+<th>IO-Ağırlıklı</th>
+<th>CPU-Ağırlıklı</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>WorkerCount</td>
+<td>CPU * 5</td>
+<td>CPU * 4</td>
+<td>CPU</td>
+</tr>
+<tr>
+<td>QueuePollInterval</td>
+<td>Zero (long-poll)</td>
+<td>Zero</td>
+<td>Zero</td>
+</tr>
+<tr>
+<td>SlidingInvisibility</td>
+<td>5m</td>
+<td>5m</td>
+<td>10m</td>
+</tr>
+<tr>
+<td>ShutdownTimeout</td>
+<td>15s</td>
+<td>30s</td>
+<td>60s</td>
+</tr>
+</tbody></table></div>
+<p class="content-example"><strong>Örnek:</strong> Bir e-ticaret platformunda Black Friday için: 1 critical-worker (ödemeler, 10 worker), 3 bulk-worker (e-postalar, bildirimler, 40 worker each). Toplam 130 worker, tek SQL Server instance üzerinden koordineli çalışıyor — zero configuration distributed processing.</p><nav class="section-links" aria-label="İlgili bölümler"><strong>İlgili bölümler:</strong> <a href="#storage-secimi">Storage Seçimi</a> · <a href="#monitoring--alerting">Monitoring &amp; Alerting</a> · <a href="#production-checklist--docker">Production Checklist</a></nav>
+</section>
+<nav class="docs-pagination"><a class="docs-page-link docs-page-previous" href="best-practices-amp-anti-patterns-ileri.html"><span>Önceki</span><strong>Best Practices & Anti-Patterns</strong></a><a class="docs-page-link docs-page-next" href="monitoring-amp-alerting-uzman.html"><span>Sonraki</span><strong>Monitoring & Alerting</strong></a></nav>
+</article></main>
+<aside class="docs-toc"><div class="docs-toc-inner"><div class="docs-toc-title">Bu sayfada</div><nav data-docs-toc></nav></div></aside>
+</div>
+<div class="search-overlay" id="searchOverlay" onclick="search.closeSearchOnOverlay(event)"><div class="search-modal" onclick="event.stopPropagation()"><div class="search-input-wrapper"><input type="text" class="search-input" id="searchInput" placeholder="Job, retry, dashboard, storage..." autocomplete="off"><button class="search-close" onclick="search.closeSearch()">×</button></div><div class="search-results" id="searchResults"></div></div></div>
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Başa dön"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg></button>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/theme/theme.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/code-highlight/code-highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/copy-code/copy-code.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/code-tabs/code-tabs.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/docs-layout/docs-layout.js"></script>
+<script>window.SEARCH_CONFIG={contentSelector:'.docs-article',maxResults:40,externalItems:[{"title":"Konfigürasyon Referansı","text":"Hangfire global ayarları, SQL Server storage, background job server, dashboard ve Redis seçenekleri için toplu başvuru sayfası.","keywords":"TEMEL","url":"konfigurasyon-referansi-temel.html","sectionType":"Sayfa"},{"title":"Giriş & Kurulum","text":"Hangfire, .NET uygulamalarında background job processing için açık kaynaklı bir framework'tür. Fire-and-forget, delayed, recurring ve continuation job türlerini persistent storage üzerinde güvenilir şekilde çalıştırır.","keywords":"TEMEL","url":"giris-amp-kurulum-temel.html","sectionType":"Sayfa"},{"title":"Fire-and-Forget Jobs","text":"Fire-and-forget job'lar hemen (veya ilk fırsatta) çalıştırılan tek seferlik görevlerdir. En yaygın Hangfire kullanım senaryosudur.","keywords":"TEMEL","url":"fire-and-forget-jobs-temel.html","sectionType":"Sayfa"},{"title":"Delayed Jobs","text":"Delayed job'lar belirli bir süre sonra veya belirli bir tarihte çalıştırılan tek seferlik görevlerdir.","keywords":"TEMEL","url":"delayed-jobs-temel.html","sectionType":"Sayfa"},{"title":"Recurring Jobs (Cron)","text":"Recurring job'lar CRON ifadelerine göre periyodik olarak çalıştırılan görevlerdir.","keywords":"TEMEL","url":"recurring-jobs-cron-temel.html","sectionType":"Sayfa"},{"title":"Continuations & Batch Jobs","text":"Continuations, bir job tamamlandığında otomatik olarak tetiklenen zincir job'lardır. Batch ise Hangfire Pro ile gelen atomik job grubudur.","keywords":"ORTA","url":"continuations-amp-batch-jobs-orta.html","sectionType":"Sayfa"},{"title":"Job Filters & Middleware","text":"Job filter'lar, job lifecycle'ının her aşamasına müdahale etmenizi sağlar — ASP.NET MVC action filter'larına benzer.","keywords":"ORTA","url":"job-filters-amp-middleware-orta.html","sectionType":"Sayfa"},{"title":"Retry & Error Handling","text":"Hangfire, başarısız job'ları otomatik retry mekanizması ile yeniden çalıştırır. Varsayılan davranış: 10 deneme, artan bekleme süreleri.","keywords":"ORTA","url":"retry-amp-error-handling-orta.html","sectionType":"Sayfa"},{"title":"Testing Strategies","text":"Background job'lar normal .NET metotlarıdır — bu da test edilmelerini kolaylaştırır.","keywords":"ORTA","url":"testing-strategies-orta.html","sectionType":"Sayfa"},{"title":"Dashboard & Güvenlik","text":"Hangfire Dashboard, tüm job'ların durumunu gösteren web arayüzüdür. Production'da mutlaka yetkilendirme ile korunmalıdır.","keywords":"İLERİ","url":"dashboard-amp-guvenlik-ileri.html","sectionType":"Sayfa"},{"title":"Storage Seçimi","text":"Storage, Hangfire'ın kalbidir — tüm job verileri, state'ler ve queue'lar burada saklanır.","keywords":"İLERİ","url":"storage-secimi-ileri.html","sectionType":"Sayfa"},{"title":"Best Practices & Anti-Patterns","text":"Hangfire'da production sorunlarının çoğu yanlış job tasarımından kaynaklanır.","keywords":"İLERİ","url":"best-practices-amp-anti-patterns-ileri.html","sectionType":"Sayfa"},{"title":"Monitoring & Alerting","text":"Production'da Hangfire'ı izlemek, sorunları erken tespit etmek için kritiktir.","keywords":"UZMAN","url":"monitoring-amp-alerting-uzman.html","sectionType":"Sayfa"},{"title":"Production Checklist & Docker","text":"Production'a deploy öncesi kontrol listesi ve container-ready konfigürasyon.","keywords":"UZMAN","url":"production-checklist-amp-docker-uzman.html","sectionType":"Sayfa"}]};window.READING_PROGRESS_CONFIG={elementId:'readingProgress',contentSelector:'.docs-article'};</script>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/search/search.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/scroll-top/scroll-top.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/reading-progress/reading-progress.js"></script>
+</body></html>

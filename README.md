@@ -13,7 +13,7 @@ Kurulumdan job tasarımına; retry, idempotency, dashboard güvenliği, storage 
 <p>
   <a href="https://oxara.github.io/hangfire-handbook/"><strong>Canlı rehberi aç</strong></a>
   ·
-  <a href="https://oxara.github.io/hangfire-handbook/#production-checklist-amp-docker-uzman"><strong>Production checklist</strong></a>
+  <a href="https://oxara.github.io/hangfire-handbook/docs/production-checklist-amp-docker-uzman.html"><strong>Production checklist</strong></a>
 </p>
 
 ## Bu rehber neyi çözüyor?
@@ -45,35 +45,36 @@ Rehber, bu soruları kod örnekleri, karar tabloları, mimari diyagramlar ve ger
 
 Hangfire'ın çalışma modelini ve temel job türlerini kurar.
 
-- [Giriş ve Kurulum](https://oxara.github.io/hangfire-handbook/#giris-amp-kurulum-temel)
-- [Fire-and-Forget Jobs](https://oxara.github.io/hangfire-handbook/#fire-and-forget-jobs-temel)
-- [Delayed Jobs](https://oxara.github.io/hangfire-handbook/#delayed-jobs-temel)
-- [Recurring Jobs ve CRON](https://oxara.github.io/hangfire-handbook/#recurring-jobs-cron-temel)
+- [Giriş ve Kurulum](https://oxara.github.io/hangfire-handbook/docs/giris-amp-kurulum-temel.html)
+- [Konfigürasyon Referansı](https://oxara.github.io/hangfire-handbook/docs/konfigurasyon-referansi-temel.html)
+- [Fire-and-Forget Jobs](https://oxara.github.io/hangfire-handbook/docs/fire-and-forget-jobs-temel.html)
+- [Delayed Jobs](https://oxara.github.io/hangfire-handbook/docs/delayed-jobs-temel.html)
+- [Recurring Jobs ve CRON](https://oxara.github.io/hangfire-handbook/docs/recurring-jobs-cron-temel.html)
 
 ### Orta
 
 Job zincirleri, lifecycle davranışları, hata yönetimi ve test stratejilerine geçer.
 
-- [Continuations ve Batch Jobs](https://oxara.github.io/hangfire-handbook/#continuations-amp-batch-jobs-orta)
-- [Job Filters ve Middleware](https://oxara.github.io/hangfire-handbook/#job-filters-amp-middleware-orta)
-- [Retry ve Error Handling](https://oxara.github.io/hangfire-handbook/#retry-amp-error-handling-orta)
-- [Testing Strategies](https://oxara.github.io/hangfire-handbook/#testing-strategies-orta)
+- [Continuations ve Batch Jobs](https://oxara.github.io/hangfire-handbook/docs/continuations-amp-batch-jobs-orta.html)
+- [Job Filters ve Middleware](https://oxara.github.io/hangfire-handbook/docs/job-filters-amp-middleware-orta.html)
+- [Retry ve Error Handling](https://oxara.github.io/hangfire-handbook/docs/retry-amp-error-handling-orta.html)
+- [Testing Strategies](https://oxara.github.io/hangfire-handbook/docs/testing-strategies-orta.html)
 
 ### İleri
 
 Production güvenliği, storage mimarisi ve dağıtık çalışma kararlarını ele alır.
 
-- [Dashboard ve Güvenlik](https://oxara.github.io/hangfire-handbook/#dashboard-amp-guvenlik-ileri)
-- [Storage Seçimi](https://oxara.github.io/hangfire-handbook/#storage-secimi-ileri)
-- [Best Practices ve Anti-Patterns](https://oxara.github.io/hangfire-handbook/#best-practices-amp-anti-patterns-ileri)
-- [Performance ve Scaling](https://oxara.github.io/hangfire-handbook/#performance-amp-scaling-ileri)
+- [Dashboard ve Güvenlik](https://oxara.github.io/hangfire-handbook/docs/dashboard-amp-guvenlik-ileri.html)
+- [Storage Seçimi](https://oxara.github.io/hangfire-handbook/docs/storage-secimi-ileri.html)
+- [Best Practices ve Anti-Patterns](https://oxara.github.io/hangfire-handbook/docs/best-practices-amp-anti-patterns-ileri.html)
+- [Performance ve Scaling](https://oxara.github.io/hangfire-handbook/docs/performance-amp-scaling-ileri.html)
 
 ### Uzman
 
 Sistemi ölçülebilir, gözlemlenebilir ve deployment'a hazır hale getirir.
 
-- [Monitoring ve Alerting](https://oxara.github.io/hangfire-handbook/#monitoring-amp-alerting-uzman)
-- [Production Checklist ve Docker](https://oxara.github.io/hangfire-handbook/#production-checklist-amp-docker-uzman)
+- [Monitoring ve Alerting](https://oxara.github.io/hangfire-handbook/docs/monitoring-amp-alerting-uzman.html)
+- [Production Checklist ve Docker](https://oxara.github.io/hangfire-handbook/docs/production-checklist-amp-docker-uzman.html)
 
 ## Rehberin yaklaşımı
 
@@ -96,9 +97,9 @@ Sistemi ölçülebilir, gözlemlenebilir ve deployment'a hazır hale getirir.
 
 ## Teknik yapı
 
-Rehber statik ve semantik HTML olarak yayınlanır. Ortak arayüz feature'ları sürümlü olarak [Oxara.DocumentTemplate](https://github.com/Oxara/Oxara.DocumentTemplate) reposundan tüketilir.
+Rehber, konu başına ayrı statik ve semantik HTML sayfalarıyla yayınlanır. [index.html](index.html) konu seçimi için giriş sayfasıdır; içerik sayfaları `docs/` dizininde tutulur. Ortak arayüz feature'ları sürümlü olarak [Oxara.DocumentTemplate](https://github.com/Oxara/Oxara.DocumentTemplate) reposundan tüketilir.
 
-Ana içerik [index.html](index.html) dosyasındadır. Markdown parser veya runtime içerik üretimi kullanılmaz; JavaScript yalnızca tema, arama, menü, sekmeler ve kod araçları gibi arayüz davranışlarını sağlar.
+Markdown parser veya runtime içerik üretimi kullanılmaz; JavaScript yalnızca tema, arama, menü, sekmeler ve kod araçları gibi arayüz davranışlarını sağlar.
 
 ## Katkı
 

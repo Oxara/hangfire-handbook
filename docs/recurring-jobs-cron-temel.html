@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recurring Jobs (Cron) — Hangfire Geliştirici El Kitabı</title>
+<meta name="description" content="Hangfire ile background job tasarımı, storage, retry, scaling ve production operasyonları.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://oxara.github.io/hangfire-handbook/docs/recurring-jobs-cron-temel.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Recurring Jobs (Cron) — Hangfire Geliştirici El Kitabı">
+<meta property="og:description" content="Hangfire ile background job tasarımı, storage, retry, scaling ve production operasyonları.">
+<meta property="og:url" content="https://oxara.github.io/hangfire-handbook/docs/recurring-jobs-cron-temel.html">
+<meta property="og:site_name" content="Hangfire Geliştirici El Kitabı">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:image" content="https://oxara.github.io/hangfire-handbook/og-image.svg">
+<meta property="og:image:type" content="image/svg+xml">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Hangfire Geliştirici El Kitabı">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Recurring Jobs (Cron) — Hangfire Geliştirici El Kitabı">
+<meta name="twitter:description" content="Hangfire ile background job tasarımı, storage, retry, scaling ve production operasyonları.">
+<meta name="twitter:image" content="https://oxara.github.io/hangfire-handbook/og-image.svg">
+<meta name="twitter:image:alt" content="Hangfire Geliştirici El Kitabı">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/base/base.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/theme/theme.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/docs-layout/docs-layout.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/code-highlight/code-highlight.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/copy-code/copy-code.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/code-tabs/code-tabs.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/search/search.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/scroll-top/scroll-top.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/reading-progress/reading-progress.css">
+<style>
+.level-badge { display:none; }
+.docs-article svg { max-width:min(100%,820px); height:auto; }
+
+    .handbook-level {
+        margin: 4.5rem 0 2rem;
+        color: var(--text-dim);
+        font-size: .78rem;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-align: center;
+        text-transform: uppercase;
+    }
+    .level-badge {
+        display: inline-block;
+        margin-left: .45rem;
+        padding: .12rem .42rem;
+        color: var(--brand);
+        background: var(--brand-subtle);
+        border-radius: 4px;
+        font-size: .62rem;
+        vertical-align: middle;
+    }
+    .docs-article > section { margin-bottom: 3.5rem; }
+    .docs-article svg { max-width: min(100%, 820px); height: auto; }
+    .docs-article blockquote {
+        margin: 1rem 0 1.5rem;
+        padding: 1rem 1.2rem;
+        color: var(--text-muted);
+        background: var(--surface);
+        border-left: 4px solid var(--border);
+        border-radius: 8px;
+    }
+
+
+    .box { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .box-storage { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .box-server { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 8; }
+    .box-dash { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 8; }
+    .label { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 13px; font-weight: 600; }
+    .sublabel { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 10px; }
+    .arrow-line { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow1); }
+
+
+    .state { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 20; }
+    .state-success { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 20; }
+    .state-fail { fill: var(--svg-box); stroke: var(--svg-err-s); stroke-width: 1.5; rx: 20; }
+    .slabel { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 12px; font-weight: 500; }
+    .aline { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow2); }
+
+
+    .dbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .dbox-wait { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 8; }
+    .dlabel { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 12px; font-weight: 500; }
+    .dsub { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 10px; }
+    .dline { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow3); }
+
+
+    .rbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .rbox-cron { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .rlabel { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 12px; font-weight: 500; }
+    .rsub { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 10px; }
+    .rline { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow4); }
+    .rloop { stroke: var(--svg-ok-s); stroke-width: 1.5; fill: none; stroke-dasharray: 4 2; marker-end: url(#arrow4); }
+
+
+    .cbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .cbox-done { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .clabel { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .csub { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+    .cline { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow5); }
+    .cbatch { fill: none; stroke: var(--svg-warn-s); stroke-width: 1; stroke-dasharray: 4 2; rx: 10; }
+
+
+    .fbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .fbox-filter { fill: var(--surface-2); stroke: var(--svg-warn-s); stroke-width: 1; rx: 6; }
+    .flabel { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .fsub { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+    .fline { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow6); }
+
+
+    .rbox2 { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 20; }
+    .rbox2-fail { fill: var(--svg-box); stroke: var(--svg-err-s); stroke-width: 1.5; rx: 20; }
+    .rbox2-ok { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 20; }
+    .rbox2-dead { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 20; }
+    .rl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .rs { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+    .rln { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow7); }
+    .rln-retry { stroke: var(--svg-warn-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow7r); stroke-dasharray: 4 2; }
+
+
+    .tbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .tbox-unit { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .tbox-int { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 8; }
+    .tbox-e2e { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 8; }
+    .tlabel { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .tsub { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+
+
+    .dbox2 { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .dbox2-secure { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .dbox2-block { fill: var(--svg-box); stroke: var(--svg-err-s); stroke-width: 1.5; rx: 8; }
+    .dl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .ds { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+
+
+    .sbox { fill: var(--svg-box); rx: 8; }
+    .sbox-sql { stroke: var(--svg-brand-s); stroke-width: 1.5; }
+    .sbox-redis { stroke: var(--svg-err-s); stroke-width: 1.5; }
+    .sbox-pg { stroke: var(--info); stroke-width: 1.5; }
+    .sl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; }
+    .ss { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+    .divider { stroke: var(--svg-stroke); stroke-width: 1; }
+
+
+    .dbbox { fill: var(--svg-box); rx: 8; }
+    .dbbox-sep { stroke: var(--svg-ok-s); stroke-width: 1.5; }
+    .dbbox-same { stroke: var(--svg-warn-s); stroke-width: 1.5; }
+    .dbl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; }
+    .dbs { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+
+
+    .bpbox-bad { fill: var(--svg-box); stroke: var(--svg-err-s); stroke-width: 1.5; rx: 8; }
+    .bpbox-good { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .bpl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 600; }
+    .bps { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+
+
+    .pbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .pbox-storage { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 2; rx: 8; }
+    .pbox-server { fill: var(--svg-box); stroke: var(--svg-warn-s); stroke-width: 1.5; rx: 8; }
+    .pl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .ps { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+    .pline { stroke: var(--svg-brand-s); stroke-width: 1; stroke-dasharray: 3 2; }
+
+
+    .mbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .mbox-alert { fill: var(--svg-box); stroke: var(--svg-err-s); stroke-width: 1.5; rx: 8; }
+    .ml { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .ms { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+
+
+    .pcbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .pcbox-db { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .pcbox-app { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .pcl { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; }
+    .pcs { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 9px; }
+
+</style>
+</head><body class="docs-page">
+<a class="skip-link" href="#main-content">İçeriğe atla</a>
+<div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+<header class="docs-topbar"><div class="docs-topbar-inner">
+<button class="docs-menu-toggle" type="button" data-docs-nav-toggle aria-label="Doküman menüsünü aç"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+<a class="docs-brand" href="../index.html"><span class="docs-brand-mark">H</span><span>Hangfire Handbook</span></a>
+<nav class="docs-top-links"><a href="giris-amp-kurulum-temel.html">Rehber</a><a href="https://github.com/Oxara/hangfire-handbook">GitHub</a></nav>
+<div class="docs-top-actions">
+<button class="search-trigger" type="button" onclick="search.openSearch()" aria-label="Arama yap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="7"></circle><line x1="21" y1="21" x2="15" y2="15"></line></svg><span>Ara</span><kbd>Ctrl+K</kbd></button>
+<button class="theme-toggle" type="button" onclick="theme.toggleTheme()" aria-label="Tema değiştir"><span class="theme-toggle-icon">☀️</span><span class="theme-toggle-label">Dark</span></button>
+</div></div></header>
+<div class="docs-overlay" data-docs-overlay></div>
+<div class="docs-shell">
+<aside class="docs-sidebar" data-docs-sidebar><div class="docs-sidebar-inner">
+<div class="docs-nav-group">
+<div class="docs-nav-label">Temel Seviye</div>
+<a class="docs-nav-link" href="giris-amp-kurulum-temel.html">Giriş & Kurulum</a>
+<a class="docs-nav-link" href="konfigurasyon-referansi-temel.html">Konfigürasyon Referansı</a>
+<a class="docs-nav-link" href="fire-and-forget-jobs-temel.html">Fire-and-Forget Jobs</a>
+<a class="docs-nav-link" href="delayed-jobs-temel.html">Delayed Jobs</a>
+<a class="docs-nav-link active" href="recurring-jobs-cron-temel.html">Recurring Jobs (Cron)</a>
+</div>
+<div class="docs-nav-group">
+<div class="docs-nav-label">Orta Seviye</div>
+<a class="docs-nav-link" href="continuations-amp-batch-jobs-orta.html">Continuations & Batch Jobs</a>
+<a class="docs-nav-link" href="job-filters-amp-middleware-orta.html">Job Filters & Middleware</a>
+<a class="docs-nav-link" href="retry-amp-error-handling-orta.html">Retry & Error Handling</a>
+<a class="docs-nav-link" href="testing-strategies-orta.html">Testing Strategies</a>
+</div>
+<div class="docs-nav-group">
+<div class="docs-nav-label">İleri Seviye</div>
+<a class="docs-nav-link" href="dashboard-amp-guvenlik-ileri.html">Dashboard & Güvenlik</a>
+<a class="docs-nav-link" href="storage-secimi-ileri.html">Storage Seçimi</a>
+<a class="docs-nav-link" href="best-practices-amp-anti-patterns-ileri.html">Best Practices & Anti-Patterns</a>
+<a class="docs-nav-link" href="performance-amp-scaling-ileri.html">Performance & Scaling</a>
+</div>
+<div class="docs-nav-group">
+<div class="docs-nav-label">Uzman Seviye</div>
+<a class="docs-nav-link" href="monitoring-amp-alerting-uzman.html">Monitoring & Alerting</a>
+<a class="docs-nav-link" href="production-checklist-amp-docker-uzman.html">Production Checklist & Docker</a>
+</div></div></aside>
+<main class="docs-main" id="main-content" tabindex="-1"><article class="docs-article">
+<header class="docs-article-header"><p class="docs-eyebrow">TEMEL</p><h1>Recurring Jobs (Cron)</h1><p class="docs-lead">Recurring job'lar CRON ifadelerine göre periyodik olarak çalıştırılan görevlerdir.</p></header>
+
+<section id="section-recurring-jobs-cron-temel">
+<div class="diagram-wrapper"><svg viewBox="0 0 780 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow4" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="var(--svg-brand-s)"></polygon></marker>
+  </defs>
+  <style>
+    .rbox { fill: var(--svg-box); stroke: var(--svg-brand-s); stroke-width: 1.5; rx: 8; }
+    .rbox-cron { fill: var(--svg-box); stroke: var(--svg-ok-s); stroke-width: 1.5; rx: 8; }
+    .rlabel { fill: var(--svg-text); font-family: Inter, sans-serif; font-size: 12px; font-weight: 500; }
+    .rsub { fill: var(--svg-muted); font-family: Inter, sans-serif; font-size: 10px; }
+    .rline { stroke: var(--svg-brand-s); stroke-width: 1.5; fill: none; marker-end: url(#arrow4); }
+    .rloop { stroke: var(--svg-ok-s); stroke-width: 1.5; fill: none; stroke-dasharray: 4 2; marker-end: url(#arrow4); }
+  </style>
+  <rect class="rbox-cron" x="20" y="70" width="160" height="60"></rect>
+  <text class="rlabel" x="100" y="95" text-anchor="middle">CRON Scheduler</text>
+  <text class="rsub" x="100" y="115" text-anchor="middle">"0 9 * * *" (her gün 09:00)</text>
+  <rect class="rbox" x="240" y="70" width="130" height="60"></rect>
+  <text class="rlabel" x="305" y="95" text-anchor="middle">Enqueue</text>
+  <text class="rsub" x="305" y="115" text-anchor="middle">Yeni instance</text>
+  <rect class="rbox" x="430" y="70" width="130" height="60"></rect>
+  <text class="rlabel" x="495" y="95" text-anchor="middle">Processing</text>
+  <text class="rsub" x="495" y="115" text-anchor="middle">Worker çalıştırır</text>
+  <rect class="rbox" x="620" y="70" width="130" height="60"></rect>
+  <text class="rlabel" x="685" y="95" text-anchor="middle">Succeeded</text>
+  <line class="rline" x1="180" y1="100" x2="238" y2="100"></line>
+  <line class="rline" x1="370" y1="100" x2="428" y2="100"></line>
+  <line class="rline" x1="560" y1="100" x2="618" y2="100"></line>
+  <!-- Loop back -->
+  <path class="rloop" d="M 100 130 C 100 180, 305 180, 305 130"></path>
+  <text class="rsub" x="200" y="175" text-anchor="middle" style="fill:var(--svg-ok-s)">sonraki schedule</text>
+</svg></div>
+
+<h3 id="karar-rehberi-recurring-jobs-cron-temel">Karar Rehberi</h3><div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Durum</th>
+<th>Öneri</th>
+<th>Örnek veya gerekçe</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Günlük rapor</td>
+<td><strong>Uygun</strong></td>
+<td>Her gün 08:00 satış özeti</td>
+</tr>
+<tr>
+<td>DB temizliği</td>
+<td><strong>Uygun</strong></td>
+<td>Haftalık soft-delete purge</td>
+</tr>
+<tr>
+<td>Health check ping</td>
+<td><strong>Uygun</strong></td>
+<td>Her 5 dk uptime monitor</td>
+</tr>
+<tr>
+<td>Event-driven tetikleme</td>
+<td><strong>Uygun değil:</strong> Mesaj kuyruğu kullan</td>
+<td>Sipariş gelince stok düş</td>
+</tr>
+<tr>
+<td>Gerçek zamanlı stream</td>
+<td><strong>Uygun değil:</strong> Cron uygun değil</td>
+<td>WebSocket push</td>
+</tr>
+</tbody></table></div>
+<h3 id="cron-ifadeleri">CRON İfadeleri</h3><div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>İfade</th>
+<th>Anlamı</th>
+<th>Hangfire Helper</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>* * * * *</code></td>
+<td>Her dakika</td>
+<td><code>Cron.Minutely</code></td>
+</tr>
+<tr>
+<td><code>0 * * * *</code></td>
+<td>Her saat başı</td>
+<td><code>Cron.Hourly</code></td>
+</tr>
+<tr>
+<td><code>0 9 * * *</code></td>
+<td>Her gün 09:00</td>
+<td><code>Cron.Daily(9)</code></td>
+</tr>
+<tr>
+<td><code>0 9 * * 1-5</code></td>
+<td>Hafta içi 09:00</td>
+<td><code>Cron.Daily(9) + custom</code></td>
+</tr>
+<tr>
+<td><code>0 0 * * 0</code></td>
+<td>Her Pazar gece yarısı</td>
+<td><code>Cron.Weekly</code></td>
+</tr>
+<tr>
+<td><code>0 0 1 * *</code></td>
+<td>Ayın 1'i gece yarısı</td>
+<td><code>Cron.Monthly</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="recurring-jobs-kullanim">Kullanım</h3><pre data-lang="csharp"><code class="language-csharp">// Program.cs veya Startup'ta
+RecurringJob.AddOrUpdate&lt;IDailyReportService&gt;(
+    "daily-sales-report",           // Unique job ID
+    svc =&gt; svc.GenerateAsync(),
+    Cron.Daily(9),                  // Her gün 09:00 UTC
+    new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.FindSystemTimeZoneById("Turkey Standard Time")
+    });
+
+RecurringJob.AddOrUpdate&lt;IDbMaintenanceService&gt;(
+    "weekly-purge-deleted",
+    svc =&gt; svc.PurgeSoftDeletedAsync(TimeSpan.FromDays(30)),
+    "0 3 * * 0",                   // Her Pazar 03:00
+    new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.FindSystemTimeZoneById("Turkey Standard Time"),
+        MisfireHandling = MisfireHandlingMode.Ignorable
+    });
+
+// Job'ı kaldır
+RecurringJob.RemoveIfExists("daily-sales-report");
+
+// Hemen tetikle (bir sonraki schedule'ı beklemeden)
+RecurringJob.TriggerJob("daily-sales-report");</code></pre><h3 id="misfirehandling">MisfireHandling</h3><p>Uygulama kapalıyken bir recurring job'ın zamanı geçerse ne olur?</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Mod</th>
+<th>Davranış</th>
+<th>Kullanım</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Relaxed</code> (varsayılan)</td>
+<td>Kaçırılan job çalıştırılır</td>
+<td>Rapor, bildirim — "geç de olsa çalışsın"</td>
+</tr>
+<tr>
+<td><code>Ignorable</code></td>
+<td>Kaçırılan job atlanır</td>
+<td>Monitoring ping — eski veri anlamsız</td>
+</tr>
+<tr>
+<td><code>Strict</code></td>
+<td>Kaçırılan her instance çalıştırılır</td>
+<td>Fatura kesilmesi — hiçbiri atlanmamalı</td>
+</tr>
+</tbody></table></div>
+<div class="callout callout-warning"><p><strong>TimeZone uyarısı:</strong> Varsayılan UTC'dir. Türkiye'de sabah 9'da çalışmasını istiyorsanız mutlaka <code>TimeZone</code> parametresi verin. Aksi halde UTC 09:00 = Türkiye 12:00 olur.</p>
+<p><strong>Eş zamanlı çalışma riski:</strong> Recurring job'un bir önceki instance'ı henüz bitmeden yeni instance tetiklenebilir (uzun süren job + kısa cron aralığı). Önlemek için <code>[DisableConcurrentExecution(timeoutInSeconds: 300)]</code> attribute'ü ekleyin — bu, aynı job'ın aynı anda birden fazla instance'ının çalışmasını engeller. (<strong>Core — ücretsiz</strong>)</p>
+<p><strong>Ace alternatifi:</strong> Daha gelişmiş concurrency control istiyorsanız (dinamik resource-based locking, semaphore ile N-concurrent limit, rate limiting): <code>Hangfire.Throttling</code> paketi (Ace lisansı) → <code>[Mutex("job-key")]</code>, <code>[Semaphore("pool", limit: 5)]</code>. Fark: <code>DisableConcurrentExecution</code> distributed lock tutar (timeout'a kadar bloklar), <code>[Mutex]</code> ise job'u reschedule eder (worker'ı bloklamaz).</p>
+</div><p class="content-example"><strong>Örnek:</strong> Bir SaaS uygulamasında her tenant için ayrı recurring job tanımlanır: <code>daily-report-tenant-{tenantId}</code>. Böylece her müşterinin raporu kendi timezone'unda doğru saatte oluşturulur. Tenant silindiğinde <code>RemoveIfExists</code> ile job da temizlenir.</p><nav class="section-links" aria-label="İlgili bölümler"><strong>İlgili bölümler:</strong> <a href="#delayed-jobs">Delayed Jobs</a> · <a href="#performance--scaling">Performance &amp; Scaling</a> · <a href="#best-practices--anti-patterns">Best Practices</a></nav>
+</section>
+<nav class="docs-pagination"><a class="docs-page-link docs-page-previous" href="delayed-jobs-temel.html"><span>Önceki</span><strong>Delayed Jobs</strong></a><a class="docs-page-link docs-page-next" href="continuations-amp-batch-jobs-orta.html"><span>Sonraki</span><strong>Continuations & Batch Jobs</strong></a></nav>
+</article></main>
+<aside class="docs-toc"><div class="docs-toc-inner"><div class="docs-toc-title">Bu sayfada</div><nav data-docs-toc></nav></div></aside>
+</div>
+<div class="search-overlay" id="searchOverlay" onclick="search.closeSearchOnOverlay(event)"><div class="search-modal" onclick="event.stopPropagation()"><div class="search-input-wrapper"><input type="text" class="search-input" id="searchInput" placeholder="Job, retry, dashboard, storage..." autocomplete="off"><button class="search-close" onclick="search.closeSearch()">×</button></div><div class="search-results" id="searchResults"></div></div></div>
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Başa dön"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg></button>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/theme/theme.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/code-highlight/code-highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/copy-code/copy-code.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/code-tabs/code-tabs.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/docs-layout/docs-layout.js"></script>
+<script>window.SEARCH_CONFIG={contentSelector:'.docs-article',maxResults:40,externalItems:[{"title":"Konfigürasyon Referansı","text":"Hangfire global ayarları, SQL Server storage, background job server, dashboard ve Redis seçenekleri için toplu başvuru sayfası.","keywords":"TEMEL","url":"konfigurasyon-referansi-temel.html","sectionType":"Sayfa"},{"title":"Giriş & Kurulum","text":"Hangfire, .NET uygulamalarında background job processing için açık kaynaklı bir framework'tür. Fire-and-forget, delayed, recurring ve continuation job türlerini persistent storage üzerinde güvenilir şekilde çalıştırır.","keywords":"TEMEL","url":"giris-amp-kurulum-temel.html","sectionType":"Sayfa"},{"title":"Fire-and-Forget Jobs","text":"Fire-and-forget job'lar hemen (veya ilk fırsatta) çalıştırılan tek seferlik görevlerdir. En yaygın Hangfire kullanım senaryosudur.","keywords":"TEMEL","url":"fire-and-forget-jobs-temel.html","sectionType":"Sayfa"},{"title":"Delayed Jobs","text":"Delayed job'lar belirli bir süre sonra veya belirli bir tarihte çalıştırılan tek seferlik görevlerdir.","keywords":"TEMEL","url":"delayed-jobs-temel.html","sectionType":"Sayfa"},{"title":"Continuations & Batch Jobs","text":"Continuations, bir job tamamlandığında otomatik olarak tetiklenen zincir job'lardır. Batch ise Hangfire Pro ile gelen atomik job grubudur.","keywords":"ORTA","url":"continuations-amp-batch-jobs-orta.html","sectionType":"Sayfa"},{"title":"Job Filters & Middleware","text":"Job filter'lar, job lifecycle'ının her aşamasına müdahale etmenizi sağlar — ASP.NET MVC action filter'larına benzer.","keywords":"ORTA","url":"job-filters-amp-middleware-orta.html","sectionType":"Sayfa"},{"title":"Retry & Error Handling","text":"Hangfire, başarısız job'ları otomatik retry mekanizması ile yeniden çalıştırır. Varsayılan davranış: 10 deneme, artan bekleme süreleri.","keywords":"ORTA","url":"retry-amp-error-handling-orta.html","sectionType":"Sayfa"},{"title":"Testing Strategies","text":"Background job'lar normal .NET metotlarıdır — bu da test edilmelerini kolaylaştırır.","keywords":"ORTA","url":"testing-strategies-orta.html","sectionType":"Sayfa"},{"title":"Dashboard & Güvenlik","text":"Hangfire Dashboard, tüm job'ların durumunu gösteren web arayüzüdür. Production'da mutlaka yetkilendirme ile korunmalıdır.","keywords":"İLERİ","url":"dashboard-amp-guvenlik-ileri.html","sectionType":"Sayfa"},{"title":"Storage Seçimi","text":"Storage, Hangfire'ın kalbidir — tüm job verileri, state'ler ve queue'lar burada saklanır.","keywords":"İLERİ","url":"storage-secimi-ileri.html","sectionType":"Sayfa"},{"title":"Best Practices & Anti-Patterns","text":"Hangfire'da production sorunlarının çoğu yanlış job tasarımından kaynaklanır.","keywords":"İLERİ","url":"best-practices-amp-anti-patterns-ileri.html","sectionType":"Sayfa"},{"title":"Performance & Scaling","text":"Hangfire, birden fazla sunucuda dağıtık çalışabilir — otomatik senkronizasyon storage üzerinden yapılır.","keywords":"İLERİ","url":"performance-amp-scaling-ileri.html","sectionType":"Sayfa"},{"title":"Monitoring & Alerting","text":"Production'da Hangfire'ı izlemek, sorunları erken tespit etmek için kritiktir.","keywords":"UZMAN","url":"monitoring-amp-alerting-uzman.html","sectionType":"Sayfa"},{"title":"Production Checklist & Docker","text":"Production'a deploy öncesi kontrol listesi ve container-ready konfigürasyon.","keywords":"UZMAN","url":"production-checklist-amp-docker-uzman.html","sectionType":"Sayfa"}]};window.READING_PROGRESS_CONFIG={elementId:'readingProgress',contentSelector:'.docs-article'};</script>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/search/search.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/scroll-top/scroll-top.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Oxara/Oxara.DocumentTemplate@refs/tags/v1.0.0/features/reading-progress/reading-progress.js"></script>
+</body></html>
